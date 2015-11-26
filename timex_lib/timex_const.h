@@ -1,0 +1,37 @@
+#ifndef TIMEX_CONST_H 
+#define TIMEX_CONST_H
+
+unsigned char message0[] = { 0x02, 0x02, 0x00, 0x42, 0x01, 0x41 };
+int message0Len = 6;
+
+unsigned char message1[] = { 0x02, 0x01, 0x00, 0xbf, 0xbe };
+int message1Len = 5;
+
+unsigned char message2[] = { 0x02, 0x01, 0x00, 0x85, 0x84 };
+int message2Len = 5;
+
+unsigned char message3[] = { 0x02, 0x01, 0x00, 0x44, 0x45 };
+int message3Len = 5;
+
+unsigned char message4[] = { 0x02, 0x01, 0x00, 0x78, 0x79 };
+int message4Len = 5;
+
+
+unsigned char FETCH_FILE_PREFIX[] = { 0x02, 0x05, 0x00, 0x80, 0x01 };
+int FETCH_FILE_PREFIX_LEN = 5;
+
+
+unsigned char FETCH_FILE1[] = { 0x02, 0x05, 0x00, 0x80, 0x01, 0x00, 0x00, 0x00, 0x84 };
+int FETCH_FILE1_LEN = 9;
+
+unsigned char continueFetching[] = { 0x02, 0x01, 0x00, 0x81, 0x80 };
+int continueFetchingLen = 5;
+
+unsigned char timexEOF[] = { 0x8a, 0x00, 0x00, 0x00 };
+int timexEOFLen = 4;
+
+/* int rawSampleSize = 48; */
+
+int fileOverviewSize = 76;
+
+#endif

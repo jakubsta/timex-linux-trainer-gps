@@ -1,2 +1,1 @@
-timex-linux-global-trainer-gps
 lxml>=3.3.3

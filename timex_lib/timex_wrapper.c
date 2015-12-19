@@ -4,7 +4,7 @@
 #include "timex_types.h"
 
 PyObject* convertFilesOverview(struct fileOverview *files, int filesCount);
-PyObject* convertSamples(struct sample *samples, int samplesCount, int *startTime);
+PyObject* convertSamples(struct sample *samples, int samplesCount, int *startTime, float *distance);
 PyObject* convertLaps(struct lap *laps, int lapsCount, int startTime);
 
 static PyObject *timex_wrapper(PyObject *self, PyObject *args) {
@@ -56,13 +56,12 @@ PyMODINIT_FUNC inittimex(void) {
     PyModule_AddObject(m, "error", TimexError);
 }
 
-PyObject* convertSamples(struct sample *samples, int samplesCount, int *startTime) {
+PyObject* convertSamples(struct sample *samples, int samplesCount, int *startTime, float *distance) {
   PyObject *pySamples = PyList_New(samplesCount);
   int i;
-  float dist = 0;
   for(i = 0; i < samplesCount; i++) {
     *startTime += (int)samples[i].timeDiff;
-    dist += samples[i].distanceDiff;
+    *distance += samples[i].distanceDiff;
 
     PyObject *sample = Py_BuildValue(
         "{s:B, s:f, s:f, s:H, s:f, s:i, s:f}",
@@ -72,7 +71,7 @@ PyObject* convertSamples(struct sample *samples, int samplesCount, int *startTim
         "alt", samples[i].gpsAlt,
         "speed", samples[i].gpsSpeed,
         "time", *startTime,
-        "dist", dist
+        "dist", *distance
         );
     PyList_SET_ITEM(pySamples, i, sample);
   }
@@ -83,12 +82,14 @@ PyObject* convertSamples(struct sample *samples, int samplesCount, int *startTim
 PyObject* convertLaps(struct lap *laps, int lapsCount, int startTime) {
   PyObject *pyLaps = PyList_New(lapsCount);
   int i;
+  float dist = 0;
 
   for(i = 0; i < lapsCount; i++) {
     PyObject *samples = convertSamples(
         laps[i].samples, 
         laps[i].samplesCount,
-        &startTime);
+        &startTime,
+        &dist);
 
     PyObject *lap = Py_BuildValue(
       "{s:f, s:f, s:i, s:i, s:i, s:i, s:O}",

@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 
-from endomondo import MobileApi, Workout, sports, TrackPoint
+from endomondo import MobileApi, Workout, TrackPoint
 import lib.tcx as tcx
+import argparse
 import keyring
 import datetime
-import logging, sys, os
+import logging, sys, os, getpass, shelve
+from functools import partial
 
 import timex
 
-def convPoint(point):
+def endo_conv_point(point):
     point['time'] = datetime.datetime.utcfromtimestamp(point['time'])
     point['dist'] /= 1000
     point['speed'] *= 3.6
@@ -43,7 +45,7 @@ def points_formater(samples):
         w.heart_rate = point['hr']
         w.speed = round(point['speed'], 3)
         points.append(w)
-    return points
+        return points
 
 def lap_formater(lap):
     points = points_formater(lap['samples'])
@@ -56,9 +58,6 @@ def lap_formater(lap):
     l.max_altitude = lap['altMax']
     l.distance_meters = lap['dist'] 
 
-    # l.max_heart = to_float(data[13])
-    # l.avg_heart = to_float(data[14])
-    
     l.trackpoints = points
     return l
 
@@ -68,35 +67,86 @@ def file_to_activity(file):
 
     startTime = datetime.datetime.utcfromtimestamp(file['start'])
     activity.start_time = startTime 
-    
+
     for lap in file['laps']:
         activity.laps.append(lap_formater(lap))
-    
+
     return activity
 
+def upload_file(endomondoapi, file):
+    points = reduce(lambda memo, lap: memo + lap['samples'], file['laps'], [])
+    map(endo_conv_point, points)
+
+    workout = Workout()
+    workout.sport = 0
+    workout.points = points
+    workout.start_time = datetime.datetime.utcfromtimestamp(file['start'])
+    workout.distance = points[-1]['dist'] 
+    workout.ascent = file['ascent']
+    workout.descent = file['descent']
+    workout.duration = file['duration']
+
+    endomondoapi.post_workout(workout=workout, properties={'audioMessage': 'false'})
+    if workout.id:
+        print "Saved! %d"%workout.id
+
+def configure_endomondo(conf):
+    endomondoapi = MobileApi()
+    email = ''
+    password = ''
+
+    while not email:
+	email = raw_input('Please enter your endomondo email: ')
+
+    while not password:
+	password = getpass.getpass()
+	if not password:
+	    print 'Password can\'t be empty'
+
+    auth_token = ''
+    try:
+	auth_token = endomondoapi.request_auth_token(email=email, password=password)
+    except:
+	pass
+    if not auth_token:
+	print 'Did not receive valid authentication token. Try one more time.'
+    else:
+	conf['endomondo'] = True
+	conf['email'] = email
+	keyring.set_password("endomondo", email, auth_token)
+	print 'Configured!'
+
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', dest='configure', action='store_true')
+    parser.set_defaults(configure=False)
+    args = parser.parse_args()
+
+    conf = shelve.open('./.conf')
+    if not conf.has_key('endomondo'):
+	conf['endomondo'] = False
+
+    if args.configure: 
+        print 'Configure'
+	configure_endomondo(conf);
+	conf.close()
+        sys.exit()
+
     files = timex.read('/dev/timex')
-    
+
     activities = map(file_to_activity, files)
     map(create_tcx_file, activities)
 
-    # logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
-    # endomondoapi = MobileApi()
-    # auth_token = keyring.get_password('endomondo', 'kubafr2@gmail.com')
-    # endomondoapi.set_auth_token(auth_token)
+    if not conf['endomondo']:
+	conf.close()
+	sys.exit()
 
-    # points = files[-1]['samples']
-    # map(convPoint, points)
-    # workout = Workout()
-    # workout.sport = 0
-    # workout.name = 'test'
-    # workout.points = points
-    # workout.start_time = datetime.datetime.utcfromtimestamp(files[-1]['start'])
-    # workout.distance = points[-1]['dist'] 
-    # workout.ascent = files[-1]['ascent']
-    # workout.descent = files[-1]['descent']
-    # workout.duration = files[-1]['duration']
+    # files = [{'start': 1450644243, 'ascent': 20, 'descent':45, 'duration': 130, 'laps':[{'samples':[{'time':1450644243, 'hr':45, 'lat': 51.170071, 'lng':16.958084, 'dist':10.0, 'alt':300.0, 'speed': 40.0}]}, {'samples':[{'time':1450644263, 'hr':145, 'lat':51.194248, 'lng':16.924536, 'dist':1000.0, 'alt':100.0, 'speed': 10.0}]}]}]
+    # Endomondo upload
+    endomondoapi = MobileApi()
+    auth_token = keyring.get_password('endomondo', conf['email'])
+    endomondoapi.set_auth_token(auth_token)
 
-    # endomondoapi.post_workout(workout=workout, properties={'audioMessage': 'false'})
-    # if workout.id:
-    #     print "Saved! %d"%workout.id
+    workouts = map(partial(upload_file, endomondoapi), files)
+
+    conf.close()

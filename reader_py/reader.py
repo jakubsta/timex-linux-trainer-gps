@@ -5,7 +5,7 @@ import lib.tcx as tcx
 import argparse
 import keyring
 import datetime
-import logging, sys, os, getpass, shelve
+import logging, sys, os, getpass, shelve, json
 from functools import partial
 
 import timex
@@ -133,13 +133,15 @@ if __name__ == '__main__':
         sys.exit()
 
     files = timex.read('/dev/timex')
+    with open('dump.json', 'w') as outfile:
+        json.dump(files, outfile)
 
     activities = map(file_to_activity, files)
     map(create_tcx_file, activities)
 
-    if not conf['endomondo']:
-	conf.close()
-	sys.exit()
+    # if not conf['endomondo']:
+    conf.close()
+    sys.exit()
 
     # files = [{'start': 1450644243, 'ascent': 20, 'descent':45, 'duration': 130, 'laps':[{'samples':[{'time':1450644243, 'hr':45, 'lat': 51.170071, 'lng':16.958084, 'dist':10.0, 'alt':300.0, 'speed': 40.0}]}, {'samples':[{'time':1450644263, 'hr':145, 'lat':51.194248, 'lng':16.924536, 'dist':1000.0, 'alt':100.0, 'speed': 10.0}]}]}]
     # Endomondo upload

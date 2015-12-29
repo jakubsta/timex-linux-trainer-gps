@@ -392,7 +392,7 @@ class MobileApi(object):
 			if lines[0] != 'OK':
 				raise EndomondoException('Could not post track. Error ``%s``. Data may be partially uploaded' % lines[0])
 
-			# workout.id = int(lines[1].split('=')[1])
+			workout.id = int(lines[1].split('=')[1])
 
 		logging.debug("Saved workout ID: %s" % workout.id)
 

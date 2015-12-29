@@ -138,12 +138,6 @@ class Workout(object):
 	steps			= 0
 	cadence_max		= 0
 
-	device			= {
-		'workout_id':	0
-	}
-
-	_points = []
-
 	_start_time		= None
 	_duration		= None
 
@@ -155,6 +149,8 @@ class Workout(object):
 	def __init__(self, properties={}):
 
 		#super(Workout, self).__init__()
+                self.device = {'workout_id': 0}
+                self._points = []
 
 		properties.setdefault('start_time', datetime.utcnow())
 

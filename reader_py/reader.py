@@ -45,7 +45,7 @@ def points_formater(samples):
         w.heart_rate = point['hr']
         w.speed = round(point['speed'], 3)
         points.append(w)
-        return points
+    return points
 
 def lap_formater(lap):
     points = points_formater(lap['samples'])
@@ -143,7 +143,6 @@ if __name__ == '__main__':
     conf.close()
     sys.exit()
 
-    # files = [{'start': 1450644243, 'ascent': 20, 'descent':45, 'duration': 130, 'laps':[{'samples':[{'time':1450644243, 'hr':45, 'lat': 51.170071, 'lng':16.958084, 'dist':10.0, 'alt':300.0, 'speed': 40.0}]}, {'samples':[{'time':1450644263, 'hr':145, 'lat':51.194248, 'lng':16.924536, 'dist':1000.0, 'alt':100.0, 'speed': 10.0}]}]}]
     # Endomondo upload
     endomondoapi = MobileApi()
     auth_token = keyring.get_password('endomondo', conf['email'])

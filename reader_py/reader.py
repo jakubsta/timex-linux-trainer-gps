@@ -77,8 +77,8 @@ def upload_file(endomondoapi, file):
     points = reduce(lambda memo, lap: memo + lap['samples'], file['laps'], [])
     map(endo_conv_point, points)
 
-    points[0].inst = 2
-    points[-1].inst = 3
+    points[0]['inst'] = 2
+    points[-1]['inst'] = 3
 
     workout = Workout()
     workout.sport = 0

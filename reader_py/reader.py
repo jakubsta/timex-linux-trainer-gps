@@ -120,6 +120,8 @@ def configure_endomondo(conf):
 	print 'Configured!'
 
 if __name__ == '__main__':
+    logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
+
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', dest='configure', action='store_true')
     parser.set_defaults(configure=False)
@@ -138,13 +140,16 @@ if __name__ == '__main__':
     files = timex.read('/dev/timex')
     with open('dump.json', 'w') as outfile:
         json.dump(files, outfile)
-
+    # files = []
+    # with open('dump.json', 'r') as infile:
+    #     files = json.load(infile)
+    
     activities = map(file_to_activity, files)
     map(create_tcx_file, activities)
 
-    # if not conf['endomondo']:
-    conf.close()
-    sys.exit()
+    if not conf['endomondo']:
+        conf.close()
+        sys.exit()
 
     # Endomondo upload
     endomondoapi = MobileApi()
